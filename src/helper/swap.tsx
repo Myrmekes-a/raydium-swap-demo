@@ -224,15 +224,18 @@ const swap = async (
     if (walletSendTx instanceof VersionedTransaction) {
       const latestBlockhash = await solConnection.getLatestBlockhash();
       walletSendTx.message.recentBlockhash = latestBlockhash.blockhash;
-      // const txSig = await wallet.sendTransaction(walletSendTx, solConnection, {
-      //   // skipPreflight: true,
-      // });
       wallet.signTransaction(walletSendTx);
       console.log(
         (await solConnection.simulateTransaction(walletSendTx, undefined)).value
           .logs
       );
-      const txSig = await execute(walletSendTx, latestBlockhash);
+      const txSig = await wallet.sendTransaction(walletSendTx, solConnection, {
+        skipPreflight: true,
+        preflightCommitment: "processed",
+      });
+      const res = await solConnection.confirmTransaction(txSig, "processed");
+      console.log(res);
+      // const txSig = await execute(walletSendTx, latestBlockhash);
       // const txSig = await solConnection.sendTransaction(walletSendTx, {
       //   preflightCommitment: "confirmed",
       // });
