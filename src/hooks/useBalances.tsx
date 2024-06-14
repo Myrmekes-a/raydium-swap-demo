@@ -26,9 +26,11 @@ const useBalances = (wallet: string) => {
         new PublicKey(wallet)
       );
 
-      const tokenBalance = await solConnection.getTokenAccountBalance(ata);
+      let usdc = 0;
+      const ataInfo = await solConnection.getAccountInfo(ata);
+      if (ataInfo) usdc = (await solConnection.getTokenAccountBalance(ata)).value.uiAmount ?? 0;
 
-      setBalance({ sol: solBal, usdc: tokenBalance.value.uiAmount ?? 0 });
+      setBalance({ sol: solBal, usdc});
     } catch (error) {
       console.error("Failed to fetch balances", error);
     } finally {
