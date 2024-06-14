@@ -222,18 +222,19 @@ const swap = async (
     console.log("Send and confirm swap transaction..");
     // Sign and send
     if (walletSendTx instanceof VersionedTransaction) {
-      wallet.signTransaction(walletSendTx);
-
-      // const latestBlockhash = await solConnection.getLatestBlockhash();
+      const latestBlockhash = await solConnection.getLatestBlockhash();
+      walletSendTx.message.recentBlockhash = latestBlockhash.blockhash;
       // const txSig = await execute(walletSendTx, latestBlockhash);
       // const txSig = await wallet.sendTransaction(walletSendTx, solConnection, {
       //   skipPreflight: true,
       // });
+      wallet.signTransaction(walletSendTx);
       console.log(
-        await solConnection.simulateTransaction(walletSendTx, undefined)
+        (await solConnection.simulateTransaction(walletSendTx, undefined)).value
+          .logs
       );
       const txSig = await solConnection.sendTransaction(walletSendTx, {
-        skipPreflight: true,
+        preflightCommitment: "confirmed",
       });
       const swapTx = txSig ? `https://solscan.io/tx/${txSig}` : "";
       onSwap(swapTx);
