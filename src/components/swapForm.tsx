@@ -45,7 +45,7 @@ const SwapForm: FC = () => {
 
   const handleSwap = useCallback(async () => {
     const amount = parseFloat(qouteAmount);
-    console.log(amount, balance?.sol, balance?.usdc);
+
     if (pay.mint === STANDARD_TOKENS[0].mint) {
       if (amount > (balance?.sol || 0)) {
         toast.error("Insufficient SOL balance");
@@ -71,7 +71,7 @@ const SwapForm: FC = () => {
       },
       (error: string) => {
         console.log("==> swap failed");
-        toast.warn(`Swap failed: ${error}`);
+        toast.error(`Swap failed: ${error}`);
         setLoading(false);
       }
     );

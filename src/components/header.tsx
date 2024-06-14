@@ -31,9 +31,6 @@ const Header: FC<HeaderProps> = ({ wallet, username, authToken, loading }) => {
       <div className="container mx-auto flex items-center justify-between">
         <Link href={"/"}>
           <div className="flex items-center gap-2 text-white">
-            <div className="h-[40px] w-[40px] relative">
-              <Image src={"/images/logo.png"} objectFit="contain" fill alt="" />
-            </div>
             <span className="hidden md:block text-primary-100 font-ubuntu italic font-medium text-3xl">
               DEX Demo
             </span>

@@ -44,9 +44,6 @@ const Layout: FC<LayoutProps> = ({ children }) => {
       <PageTabs />
       <div className="py-10 md:py-20 min-h-[calc(100vh-156px)] relative">
         {children}
-        <div className="absolute left-0 top-0 w-full h-full opacity-60">
-          <Image src="/images/bg.png" fill objectFit="cover" alt="" />
-        </div>
       </div>
     </main>
   );
