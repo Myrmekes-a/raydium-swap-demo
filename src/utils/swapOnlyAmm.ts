@@ -27,6 +27,7 @@ import {
 } from "@solana/web3.js";
 
 import {
+  NATIVE_MINT,
   TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
   getMint,
@@ -151,24 +152,19 @@ export async function formatAmmKeysById(
 export async function getBuyTx(
   solanaConnection: Connection,
   wallet: WalletContextState,
-  baseMint: PublicKey,
-  quoteMint: PublicKey,
+  baseToken: Token,
+  quoteToken: Token,
   amount: number,
   targetPool: string
 ) {
-  const baseInfo = await getMint(solanaConnection, baseMint);
+  const baseInfo = await getMint(solanaConnection, baseToken.mint);
   if (baseInfo == null) {
     return null;
   }
 
-  const baseDecimal = baseInfo.decimals;
-
-  const baseToken = new Token(TOKEN_PROGRAM_ID, baseMint, baseDecimal);
-  const quoteToken = new Token(TOKEN_PROGRAM_ID, quoteMint, 9);
-
   const quoteTokenAmount = new TokenAmount(
     quoteToken,
-    Math.floor(amount * 10 ** 9)
+    Math.floor(amount * 10 ** quoteToken.decimals)
   );
   const slippage = new Percent(100, 100);
   const walletTokenAccounts = await getWalletTokenAccount(
@@ -204,27 +200,26 @@ export async function getBuyTx(
 export async function getSellTx(
   solanaConnection: Connection,
   wallet: WalletContextState,
-  baseMint: PublicKey,
-  quoteMint: PublicKey,
-  amount: string,
+  baseToken: Token,
+  quoteToken: Token,
+  amount: number,
   targetPool: string
 ) {
   try {
     const tokenAta = await getAssociatedTokenAddress(
-      baseMint,
+      baseToken.mint,
       wallet.publicKey!
     );
-    const tokenBal = await solanaConnection.getTokenAccountBalance(tokenAta);
-    if (!tokenBal || tokenBal.value.uiAmount == 0) return null;
-    const balance = tokenBal.value.amount;
-    tokenBal.value.decimals;
-    const baseToken = new Token(
-      TOKEN_PROGRAM_ID,
-      baseMint,
-      tokenBal.value.decimals
+
+    if (!baseToken.mint.equals(NATIVE_MINT)) {
+      const tokenBal = await solanaConnection.getTokenAccountBalance(tokenAta);
+      if (!tokenBal || tokenBal.value.uiAmount == 0) return null;
+    }
+
+    const baseTokenAmount = new TokenAmount(
+      baseToken,
+      Math.floor(amount * 10 ** baseToken.decimals)
     );
-    const quoteToken = new Token(TOKEN_PROGRAM_ID, quoteMint, 9);
-    const baseTokenAmount = new TokenAmount(baseToken, amount);
     const slippage = new Percent(99, 100);
     const walletTokenAccounts = await getWalletTokenAccount(
       solanaConnection,

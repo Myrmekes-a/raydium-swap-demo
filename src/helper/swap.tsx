@@ -64,84 +64,6 @@ const swap = async (
   );
 
   try {
-    // console.log("Triggering swap..");
-
-    // const poolInfos = await formatAmmKeysById(solConnection, SOL_USDC_PAIR);
-    // const poolKeys = jsonInfo2PoolKeys(poolInfos) as LiquidityPoolKeys;
-    // if (poolKeys == null) {
-    //   onFailed("Failed to fetch pool info");
-    //   return;
-    // }
-
-    // console.log("simulating amountOut...");
-    // // default slippage
-    // const slippage = new Percent(1, 100);
-
-    // const poolInfo = await Liquidity.fetchInfo({
-    //   connection: solConnection,
-    //   poolKeys,
-    // });
-
-    const amountIn = Math.floor(
-      inputAmount *
-        10 ** (reverse ? usdcCurrency.decimals : solCurrency.decimals)
-    );
-    // console.log("amountIn", amountIn);
-    // const currencyIn = new CurrencyAmount(
-    //   reverse
-    //     ? new Currency(
-    //         usdcCurrency.decimals,
-    //         usdcCurrency.symbol,
-    //         usdcCurrency.name
-    //       )
-    //     : SOL,
-    //   amountIn
-    // );
-
-    // const { minAmountOut } = Liquidity.computeAmountOut({
-    //   poolKeys: poolKeys,
-    //   poolInfo: poolInfo,
-    //   amountIn: currencyIn,
-    //   currencyOut: reverse ? solCurrency : usdcCurrency,
-    //   slippage: slippage,
-    // });
-
-    // console.log("minAmountOut", minAmountOut);
-
-    // const walletTokenAccounts = await getWalletTokenAccount(
-    //   solConnection,
-    //   wallet.publicKey
-    // );
-
-    // console.log("Building swap transaction..");
-    // // -------- step 2: create instructions by SDK function --------
-    // const { innerTransactions } = await Liquidity.makeSwapInstructionSimple({
-    //   connection: solConnection,
-    //   poolKeys,
-    //   userKeys: {
-    //     tokenAccounts: walletTokenAccounts,
-    //     owner: wallet.publicKey,
-    //   },
-    //   amountIn: currencyIn,
-    //   amountOut: minAmountOut,
-    //   fixedSide: "in",
-    //   makeTxVersion: TxVersion.V0,
-    //   computeBudgetConfig: {
-    //     microLamports: 12_000,
-    //     units: 100_000,
-    //   },
-    // });
-
-    // const willSendTx = (
-    //   await buildSimpleTransaction({
-    //     connection: solConnection,
-    //     makeTxVersion: TxVersion.V0,
-    //     payer: wallet.publicKey,
-    //     innerTransactions: innerTransactions,
-    //     addLookupTableInfo: LOOKUP_TABLE_CACHE,
-    //   })
-    // )[0];
-
     let preIxs: TransactionInstruction[] = [];
 
     const wSolAccount = getAssociatedTokenAddressSync(
@@ -163,14 +85,14 @@ const swap = async (
 
       // // Wrap input sol
       // if (!reverse) {
-      preIxs.push(
-        SystemProgram.transfer({
-          fromPubkey: wallet.publicKey,
-          toPubkey: wSolAccount,
-          lamports: amountIn,
-        })
-      );
-      preIxs.push(createSyncNativeInstruction(wSolAccount, TOKEN_PROGRAM_ID));
+      // preIxs.push(
+      //   SystemProgram.transfer({
+      //     fromPubkey: wallet.publicKey,
+      //     toPubkey: wSolAccount,
+      //     lamports: amountIn,
+      //   })
+      // );
+      // preIxs.push(createSyncNativeInstruction(wSolAccount, TOKEN_PROGRAM_ID));
     }
 
     const tokenAta = getAssociatedTokenAddressSync(
@@ -205,17 +127,17 @@ const swap = async (
       ? await getBuyTx(
           solConnection,
           wallet,
-          solCurrency.mint,
-          usdcCurrency.mint,
+          solCurrency,
+          usdcCurrency,
           inputAmount,
           SOL_USDC_PAIR
         )
       : await getSellTx(
           solConnection,
           wallet,
-          solCurrency.mint,
-          usdcCurrency.mint,
-          amountIn.toString(),
+          solCurrency,
+          usdcCurrency,
+          inputAmount,
           SOL_USDC_PAIR
         );
 
@@ -224,7 +146,7 @@ const swap = async (
     if (walletSendTx instanceof VersionedTransaction) {
       const latestBlockhash = await solConnection.getLatestBlockhash();
       walletSendTx.message.recentBlockhash = latestBlockhash.blockhash;
-      wallet.signTransaction(walletSendTx);
+      // wallet.signTransaction(walletSendTx);
       console.log(
         (await solConnection.simulateTransaction(walletSendTx, undefined)).value
           .logs
@@ -235,10 +157,6 @@ const swap = async (
       });
       const res = await solConnection.confirmTransaction(txSig, "processed");
       console.log(res);
-      // const txSig = await execute(walletSendTx, latestBlockhash);
-      // const txSig = await solConnection.sendTransaction(walletSendTx, {
-      //   preflightCommitment: "confirmed",
-      // });
       const swapTx = txSig ? `https://solscan.io/tx/${txSig}` : "";
       onSwap(swapTx);
     } else {
